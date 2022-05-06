@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <thread>
 #include <mutex>
 #include <atomic>
@@ -75,9 +75,10 @@ int main()
     telnet.config=&config;
     if(telnet.get_socketstate()==awl::Net::ssListening)
     {
-
         telnet.start(true);
     }
+
+    std::string synctime_s = config.getValue("synctime");
 
 
 
@@ -97,6 +98,35 @@ int main()
     signal(SIGUSR1,sig_handler);
     signal(SIGTERM,sig_handler);
     signal(SIGKILL,sig_handler);
+
+
+
+
+    time_t t = time(0);
+    time_t synctime_t=0;
+    struct tm* ts = localtime(&t);
+
+    std::cout << "**** " << ts->tm_hour << std::endl;
+
+    if(ts->tm_hour < 4)
+    {
+        std::string _s1 = synctime_s+" "+awl::Core::dateToStringt(t);
+        synctime_t = awl::Core::stringToTimeStamp(_s1);
+    }
+    else
+    {
+        awl::Core::awl_addDay(t);
+        std::string _s2 = awl::Core::dateToStringt(t)+" "+synctime_s;
+        synctime_t = awl::Core::stringToTimeStamp(_s2);
+    }
+
+    std::string syncTime = awl::Core::timeToStringt(synctime_t);
+    std::string syncDate = awl::Core::dateToStringt(synctime_t);
+
+    std::cout << "Next syncing at: " << syncTime << " " << syncDate << std::endl;
+
+    t=time(0);
+
     while(1)
     {
        std::vector<SensorThread*> sensors = tcpserver.getConnections();
@@ -108,6 +138,36 @@ int main()
        }
 
        std::cout << "Sensors connected: " << sensors.size() << std::endl;
+
+       if( time(0) > synctime_t )
+       {
+           //todo
+           // Build and add to sensorthreads cmd_startAudio_request cmd
+           awl::Core::awl_addDay(synctime_t);
+           syncTime = awl::Core::timeToStringt(synctime_t);
+           syncDate = awl::Core::dateToStringt(synctime_t);
+
+           std::cout << "Next syncing at: " << syncTime << " " << syncDate << std::endl;
+       }
+
+       time_t _t=time(0);
+       if(_t > t+5)
+       {
+           COMMAND cmd;
+           cmd.cmd=cmd_ping_request;
+           for(size_t i=0; i<sensors.size(); i++)
+           {
+               int tryct=0;
+               while(!sensors.at(i)->addCommand(cmd))
+               {
+                   if(tryct++==10)
+                   {
+                       std::cout << "main thread error: cam't take mutex!" << std::endl;
+                   }
+               }
+           }
+           t=_t;
+       }
 
        sleep(2);
     }

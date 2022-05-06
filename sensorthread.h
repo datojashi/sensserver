@@ -3,6 +3,7 @@
 
 #include "net.h"
 #include <cstdio>
+#include <queue>
 #include "audiothread.h"
 
 #define MAX_AUDIO_CHANNELS 2
@@ -77,6 +78,15 @@ public:
     SensorThread();
     ~SensorThread();
 
+    bool addCommand(COMMAND cmd);
+
+protected:
+    void getmessage();
+    void onstart();
+    void onwork();
+    void onmessage();
+
+
 private:
     int ct;
     int ct2;
@@ -86,24 +96,19 @@ private:
     //    uint32_t nmb;
     //    uint32_t msgsize;
 
+
+    std::queue<COMMAND> commands;
+
     uint32_t size;
-
-    void getmessage();
-    void onstart();
-    void onwork();
-    void onmessage();
-
-    void processAudioData();
-
-
     awl::ByteArray chunk;
-
     AudioChannel* audiochannels[MAX_AUDIO_CHANNELS];
-
-
 
     int msg_ct = 0;
     uint8_t send_ct {0};
+
+    void processAudioData();
+    void processCommand();
+    void sendPing();
 
 
 };

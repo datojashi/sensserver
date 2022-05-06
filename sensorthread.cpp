@@ -17,6 +17,18 @@ SensorThread::~SensorThread()
     }
 }
 
+
+bool SensorThread::addCommand(COMMAND cmd)
+{
+    if(mutex.try_lock())
+    {
+        commands.push(cmd);
+        mutex.unlock();
+        return true;
+    }
+    return false;
+}
+
 void SensorThread::onstart()
 {
     ct=0;
@@ -37,28 +49,85 @@ void SensorThread::processAudioData()
     }
 }
 
+void SensorThread::processCommand()
+{
+    COMMAND cmd;
+    cmd.cmd=cmd_None;
+
+    if(mutex.try_lock())
+    {
+        if(!commands.empty())
+        {
+            cmd=commands.front();
+            commands.pop();
+        }
+        mutex.unlock();
+    }
+
+    switch (cmd.cmd)
+    {
+    case cmd_ping_request:
+    {
+        sendPing();
+        break;
+    }
+    case cmd_startAudio_request:
+    {
+        break;
+    }
+    case cmd_stopAudio_request:
+    {
+        break;
+    }
+    case cmd_startLive_request:
+    {
+        break;
+    }
+    case cmd_stopLive_response:
+    {
+        break;
+    }
+    default:
+        break;
+    }
+
+}
+
+
+void SensorThread::sendPing()
+{
+    char resp[256];
+    memset(resp,0,256);
+    resp[1]=cmd_ping_request;
+    resp[2]=send_ct++;
+    awl::ByteArray ba;
+    awl::Core::initba(ba,resp,256);
+    socket->send(ba);
+    std::cout << "Ping sent" << std::endl;
+}
+
 void SensorThread::onwork()
 {
     //std::cout << "onwork "  << msg_ct << std::endl;
+    /*
     if(msg_ct > 100)
     {
-        char resp[256];
-        memset(resp,0,256);
-        resp[1]=cmd_ping_request;
-        resp[2]=send_ct++;
-        awl::ByteArray ba;
-        awl::Core::initba(ba,resp,256);
-        socket->send(ba);
+        sendPing();
         msg_ct=0;
     }
+    //*/
+
+
+    processCommand();
+
 }
 
 void SensorThread::onmessage()
 {
     MESSAGE* msg = (MESSAGE*)message.data();
 
-    std::cout << "=== ";
-    awl::Core::printhex(message);
+    //std::cout << "=== ";
+    //awl::Core::printhex(message);
 
 
     //*
@@ -78,12 +147,32 @@ void SensorThread::onmessage()
         }
         break;
     }
+    case cmd_ping_response:
+    {
+        break;
+    }
+    case cmd_startAudio_response:
+    {
+        break;
+    }
+    case cmd_stopAudio_response:
+    {
+        break;
+    }
+    case cmd_startLive_request:
+    {
+        break;
+    }
+    case cmd_stopLive_response:
+    {
+        break;
+    }
     case cmd_AudioData_request:
     {
         msg_ct++;
-        std::cout << " --- " <<   (unsigned int)msg->cmd << "\t" << (unsigned int)msg->nmb << "\t" << msg->sz << std::endl;
+        //std::cout << " --- " <<   (unsigned int)msg->cmd << "\t" << (unsigned int)msg->nmb << "\t" << msg->sz << std::endl;
         uint nmb=(unsigned int)msg->nmb;
-        std::cout << "===" << nmb << std::endl;
+        //std::cout << "===" << nmb << std::endl;
 
         if(nmb > 0 && nmb <= MAX_AUDIO_CHANNELS)
         {
