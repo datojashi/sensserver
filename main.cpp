@@ -162,7 +162,7 @@ int main()
                {
                    if(tryct++==10)
                    {
-                       std::cout << "main thread error: cam't take mutex!" << std::endl;
+                       std::cout << "main thread error: can't take mutex!" << std::endl;
                    }
                }
            }

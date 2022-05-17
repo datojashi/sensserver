@@ -63,16 +63,27 @@ void SensorThread::processCommand()
         }
         mutex.unlock();
     }
+    if(cmd.cmd!=cmd_None)
+        sendMsg(cmd.cmd);
+}
 
-    switch (cmd.cmd)
+
+void SensorThread::sendMsg(CMD cmd)
+{
+    memset(reqdata,0,256);
+    reqdata[1]=cmd;
+    reqdata[2]=send_ct++;
+
+    switch (cmd)
     {
     case cmd_ping_request:
     {
-        sendPing();
+        std::cout << "Ping sent" << std::endl;;
         break;
     }
     case cmd_startAudio_request:
     {
+        std::cout << "Start adio request sent" << std::endl;
         break;
     }
     case cmd_stopAudio_request:
@@ -87,15 +98,32 @@ void SensorThread::processCommand()
     {
         break;
     }
+    case cmd_setRTC_request:
+    {
+        time_t t=time(0);
+        struct tm *dt=localtime(&t);
+        reqdata[3]=dt->tm_sec;
+        reqdata[4]=dt->tm_min;
+        reqdata[5]=dt->tm_hour;
+        reqdata[6]=dt->tm_mday;
+        reqdata[7]=dt->tm_mon+1;
+        reqdata[8]=dt->tm_year-100;
+        std::cout << "Set RTC request sent" << std::endl;
+        break;
+    }
     default:
         break;
     }
 
+    awl::ByteArray ba;
+    awl::Core::initba(ba,reqdata,256);
+    awl::Core::printhex(ba);
+    socket->send(ba);
 }
-
 
 void SensorThread::sendPing()
 {
+    /*
     char resp[256];
     memset(resp,0,256);
     resp[1]=cmd_ping_request;
@@ -104,7 +132,63 @@ void SensorThread::sendPing()
     awl::Core::initba(ba,resp,256);
     socket->send(ba);
     std::cout << "Ping sent" << std::endl;
+    */
+
 }
+
+void SensorThread::sendStartAudioRequest()
+{
+    /*
+    char resp[256];
+    memset(resp,0,256);
+    resp[1]=cmd_startAudio_request;
+    resp[2]=send_ct++;
+    awl::ByteArray ba;
+    awl::Core::initba(ba,resp,256);
+    socket->send(ba);
+    std::cout << "startAudio request sent" << std::endl;
+    */
+}
+
+
+void SensorThread::sendStopAudioRequest()
+{
+    char resp[256];
+    memset(resp,0,256);
+    resp[1]=cmd_stopAudio_request;
+    resp[2]=send_ct++;
+    awl::ByteArray ba;
+    awl::Core::initba(ba,resp,256);
+    socket->send(ba);
+    std::cout << "startAudio request sent" << std::endl;
+}
+
+
+void SensorThread::sendStartLiveRequest()
+{
+    char resp[256];
+    memset(resp,0,256);
+    resp[1]=cmd_startAudio_request;
+    resp[2]=send_ct++;
+    awl::ByteArray ba;
+    awl::Core::initba(ba,resp,256);
+    socket->send(ba);
+    std::cout << "startAudio request sent" << std::endl;
+}
+
+
+void SensorThread::sendStopLiveRequest()
+{
+    char resp[256];
+    memset(resp,0,256);
+    resp[1]=cmd_stopAudio_request;
+    resp[2]=send_ct++;
+    awl::ByteArray ba;
+    awl::Core::initba(ba,resp,256);
+    socket->send(ba);
+    std::cout << "startAudio request sent" << std::endl;
+}
+
 
 void SensorThread::onwork()
 {

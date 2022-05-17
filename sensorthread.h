@@ -27,6 +27,9 @@ enum  CMD
     cmd_startLive_request   =   0x08U, // server --> sensor
     cmd_stopLive_response   =   0x09U, // sensor --> server
 
+    cmd_setRTC_request	= 0x0aU,	//server --> sensor
+    cmd_setRTC_response	= 0x0bU,	//sensor --> server
+
     cmd_None    =0x00ffU
 };
 
@@ -106,10 +109,18 @@ private:
     int msg_ct = 0;
     uint8_t send_ct {0};
 
+    char reqdata[256];
+
     void processAudioData();
     void processCommand();
-    void sendPing();
 
+    void sendPing();
+    void sendStartAudioRequest();
+    void sendStopAudioRequest();
+    void sendStartLiveRequest();
+    void sendStopLiveRequest();
+
+    void sendMsg(CMD cmd);
 
 };
 
