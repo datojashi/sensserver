@@ -21,16 +21,26 @@ enum  CMD
     cmd_startAudio_request   =   0x05U, // server --> sensor
     cmd_startAudio_response  =   0x06U, // sensor --> server
 
-    cmd_stopAudio_request   =   0x06U, //  server --> sensor
-    cmd_stopAudio_response  =   0x07U, //  sensor --> server
+    cmd_stopAudio_request   =   0x07U, //  server --> sensor
+    cmd_stopAudio_response  =   0x08U, //  sensor --> server
 
-    cmd_startLive_request   =   0x08U, // server --> sensor
-    cmd_stopLive_response   =   0x09U, // sensor --> server
+    cmd_startLive_request   =   0x09U, // server --> sensor
+    cmd_startLive_response   =   0x0aU, // sensor --> server
 
-    cmd_setRTC_request	= 0x0aU,	//server --> sensor
-    cmd_setRTC_response	= 0x0bU,	//sensor --> server
+    cmd_stopLive_request   =   0x0bU, // server --> sensor
+    cmd_stopLive_response   =   0x0cU, // sensor --> server
+
+    cmd_setRTC_request	= 0x0dU,	//server --> sensor
+    cmd_setRTC_response	= 0x0eU,	//sensor --> server
 
     cmd_None    =0x00ffU
+};
+
+enum MSG_STATE
+{
+    ms_none = 0,
+    ms_sent = 1,
+    ms_responded=2,
 };
 
 struct __attribute__((__packed__)) COMMAND
@@ -82,12 +92,18 @@ public:
     ~SensorThread();
 
     bool addCommand(COMMAND cmd);
+    bool getResponse(awl::ByteArray& resp);
+    unsigned int getMsgState();
+
+
+    std::atomic_bool sensor_initialised=false;
 
 protected:
     void getmessage();
     void onstart();
     void onwork();
     void onmessage();
+    void ontimeout();
 
 
 private:
@@ -114,13 +130,13 @@ private:
     void processAudioData();
     void processCommand();
 
-    void sendPing();
-    void sendStartAudioRequest();
-    void sendStopAudioRequest();
-    void sendStartLiveRequest();
-    void sendStopLiveRequest();
 
     void sendMsg(CMD cmd);
+
+
+    std::atomic_uint msgState=ms_none;
+    uint8_t waitmsg;
+
 
 };
 

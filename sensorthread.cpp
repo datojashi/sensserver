@@ -20,13 +20,10 @@ SensorThread::~SensorThread()
 
 bool SensorThread::addCommand(COMMAND cmd)
 {
-    if(mutex.try_lock())
-    {
-        commands.push(cmd);
-        mutex.unlock();
-        return true;
-    }
-    return false;
+    mutex.lock();
+    commands.push(cmd);
+    mutex.unlock();
+    return true;
 }
 
 void SensorThread::onstart()
@@ -64,9 +61,12 @@ void SensorThread::processCommand()
         mutex.unlock();
     }
     if(cmd.cmd!=cmd_None)
+    {
         sendMsg(cmd.cmd);
+        msgState.store(ms_sent);
+        std::cout << "msgState=" << msgState.load() << std::endl;
+    }
 }
-
 
 void SensorThread::sendMsg(CMD cmd)
 {
@@ -78,24 +78,29 @@ void SensorThread::sendMsg(CMD cmd)
     {
     case cmd_ping_request:
     {
-        std::cout << "Ping sent" << std::endl;;
+        std::cout << "Ping sent" << std::endl;
+        waitmsg=cmd_ping_response;
         break;
     }
     case cmd_startAudio_request:
     {
         std::cout << "Start adio request sent" << std::endl;
+        waitmsg=cmd_startAudio_response;
         break;
     }
     case cmd_stopAudio_request:
     {
+        waitmsg=cmd_stopAudio_response;
         break;
     }
     case cmd_startLive_request:
     {
+        waitmsg=cmd_startLive_response;
         break;
     }
-    case cmd_stopLive_response:
+    case cmd_stopLive_request:
     {
+        waitmsg=cmd_stopLive_response;
         break;
     }
     case cmd_setRTC_request:
@@ -108,7 +113,8 @@ void SensorThread::sendMsg(CMD cmd)
         reqdata[6]=dt->tm_mday;
         reqdata[7]=dt->tm_mon+1;
         reqdata[8]=dt->tm_year-100;
-        std::cout << "Set RTC request sent" << std::endl;
+        std::cout << "Set RTC request sent   " << msgState.load() << std::endl;
+        waitmsg=cmd_setRTC_response;
         break;
     }
     default:
@@ -121,89 +127,12 @@ void SensorThread::sendMsg(CMD cmd)
     socket->send(ba);
 }
 
-void SensorThread::sendPing()
-{
-    /*
-    char resp[256];
-    memset(resp,0,256);
-    resp[1]=cmd_ping_request;
-    resp[2]=send_ct++;
-    awl::ByteArray ba;
-    awl::Core::initba(ba,resp,256);
-    socket->send(ba);
-    std::cout << "Ping sent" << std::endl;
-    */
-
-}
-
-void SensorThread::sendStartAudioRequest()
-{
-    /*
-    char resp[256];
-    memset(resp,0,256);
-    resp[1]=cmd_startAudio_request;
-    resp[2]=send_ct++;
-    awl::ByteArray ba;
-    awl::Core::initba(ba,resp,256);
-    socket->send(ba);
-    std::cout << "startAudio request sent" << std::endl;
-    */
-}
-
-
-void SensorThread::sendStopAudioRequest()
-{
-    char resp[256];
-    memset(resp,0,256);
-    resp[1]=cmd_stopAudio_request;
-    resp[2]=send_ct++;
-    awl::ByteArray ba;
-    awl::Core::initba(ba,resp,256);
-    socket->send(ba);
-    std::cout << "startAudio request sent" << std::endl;
-}
-
-
-void SensorThread::sendStartLiveRequest()
-{
-    char resp[256];
-    memset(resp,0,256);
-    resp[1]=cmd_startAudio_request;
-    resp[2]=send_ct++;
-    awl::ByteArray ba;
-    awl::Core::initba(ba,resp,256);
-    socket->send(ba);
-    std::cout << "startAudio request sent" << std::endl;
-}
-
-
-void SensorThread::sendStopLiveRequest()
-{
-    char resp[256];
-    memset(resp,0,256);
-    resp[1]=cmd_stopAudio_request;
-    resp[2]=send_ct++;
-    awl::ByteArray ba;
-    awl::Core::initba(ba,resp,256);
-    socket->send(ba);
-    std::cout << "startAudio request sent" << std::endl;
-}
-
-
 void SensorThread::onwork()
 {
-    //std::cout << "onwork "  << msg_ct << std::endl;
-    /*
-    if(msg_ct > 100)
+    if(msgState.load()==ms_none)
     {
-        sendPing();
-        msg_ct=0;
+        processCommand();
     }
-    //*/
-
-
-    processCommand();
-
 }
 
 void SensorThread::onmessage()
@@ -233,10 +162,30 @@ void SensorThread::onmessage()
     }
     case cmd_ping_response:
     {
+        if(msgState.load()==ms_sent && waitmsg==cmd_ping_response)
+        {
+            msgState.store(ms_responded);
+            //std::cout << "Message ping_response received" << std::endl;
+        }
+        break;
+    }
+    case cmd_setRTC_response:
+    {
+        if(msgState.load()==ms_sent && waitmsg==cmd_setRTC_response)
+        {
+           msgState.store(ms_responded);
+           std::cout << "Message setRTC_response received" << std::endl;
+        }
+        else
+        {
+            std::cout << "Message setRTC_response not excepted" << std::endl;
+
+        }
+
         break;
     }
     case cmd_startAudio_response:
-    {
+    {        
         break;
     }
     case cmd_stopAudio_response:
@@ -286,51 +235,10 @@ void SensorThread::onmessage()
     //*/
 }
 
-/*
-void SensorThread::getmessage()
+void SensorThread::ontimeout()
 {
-    if(tba.size() > 0)
-    {
-        messages.clear();
-        unsigned int  i=0;
-        if(chunk.size() > 0)
-        {
-            awl::Core::prependByteArray(tba,chunk);
-            chunk.clear();
-        }
-        awl::ByteArray msg;
-
-
-        while( (i+524) <= tba.size())
-        {
-            if((unsigned char)tba.at(i)==0xaa && (unsigned char)tba.at(i+1)==0x55 && (unsigned char)tba.at(i+2)==0xaa && (unsigned char)tba.at(i+3)==0x55)
-            {
-                msg=awl::Core::byteArrayMid(tba,i,524);
-                messages.push_back(msg);
-                //std::cout << "\t===== " << i << "\t==== " << msg.size() << "\t==== ";
-                //awl::Core::printhex(msg);
-            }
-            else
-            {
-                i++;
-                continue;
-            }
-
-            i=i+524;
-        }
-        if(i < tba.size())
-        {
-            chunk=awl::Core::byteArrayRight(tba,i);
-        }
-
-
-        ct=ct+messages.size();
-        ct2=ct2+messages.size();
-
-
-    }
+    //std::cout << "---" << std::endl;
 }
-*/
 
 void SensorThread::getmessage()
 {
@@ -353,7 +261,7 @@ void SensorThread::getmessage()
         if(msgp->tag==0x55aa)
         {
             //std::cout << "====== 3 ====== " << msgp->cmd << "\t" << msgp->nmb << "\t" << msgp->sz << std::endl;
-            if( (i+msgp->sz+sizeof (MESSAGE)) < tba.size() )
+            if( (i+msgp->sz+sizeof (MESSAGE)) <= tba.size() )
             {
                 msg=awl::Core::byteArrayMid(tba,i,msgp->sz);
                 //awl::Core::printhex(msg);
@@ -376,4 +284,31 @@ void SensorThread::getmessage()
     //*/
 
 
+}
+
+
+bool SensorThread::getResponse(awl::ByteArray& resp)
+{
+    int ct=0;
+    bool result=false;
+    //std::cout << "getResponse    " << msgState.load() << std::endl;
+    while(ct < 5)
+    {
+        if(msgState.load()==ms_responded)
+        {
+            resp = awl::Core::byteArrayRight(message,sizeof (MESSAGE));
+            result = true;
+            break;
+        }
+        ct++;
+        usleep(100000);
+    }
+    msgState.store(ms_none);
+    return result;
+}
+
+
+unsigned SensorThread::getMsgState()
+{
+    return msgState.load();
 }

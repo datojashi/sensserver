@@ -16,19 +16,19 @@
 using namespace std;
 
 void sig_handler(int signum){
-  switch(signum)
-  {
-   case SIGUSR1:
-      break;
-  case SIGUSR2:
-     break;
-  case SIGTERM:
-     break;
-  case SIGKILL:
-     break;
-  }
+    switch(signum)
+    {
+    case SIGUSR1:
+        break;
+    case SIGUSR2:
+        break;
+    case SIGTERM:
+        break;
+    case SIGKILL:
+        break;
+    }
 
-  std::cout << signum << std::endl;
+    std::cout << signum << std::endl;
 }
 
 int main()
@@ -127,49 +127,83 @@ int main()
 
     t=time(0);
 
+    std::vector<SensorThread*> sensors; //= tcpserver.getConnections();
+    std::vector<SensTelnet*> telnets; //= telnet.getConnections();
+
     while(1)
     {
-       std::vector<SensorThread*> sensors = tcpserver.getConnections();
-       std::vector<SensTelnet*> telnets = telnet.getConnections();
+       sensors = tcpserver.getConnections();
+       telnets = telnet.getConnections();
 
-       for(size_t i=0; i<telnets.size(); i++)
-       {
+        for(size_t i=0; i<telnets.size(); i++)
+        {
             telnets[i]->sensors=sensors;
-       }
+        }
 
-       std::cout << "Sensors connected: " << sensors.size() << std::endl;
+        std::cout << "Sensors connected: " << sensors.size() << std::endl;
 
-       if( time(0) > synctime_t )
-       {
-           //todo
-           // Build and add to sensorthreads cmd_startAudio_request cmd
-           awl::Core::awl_addDay(synctime_t);
-           syncTime = awl::Core::timeToStringt(synctime_t);
-           syncDate = awl::Core::dateToStringt(synctime_t);
+        if( time(0) > synctime_t )
+        {
+            //todo
+            // Build and add to sensorthreads cmd_startAudio_request cmd
+            awl::Core::awl_addDay(synctime_t);
+            syncTime = awl::Core::timeToStringt(synctime_t);
+            syncDate = awl::Core::dateToStringt(synctime_t);
 
-           std::cout << "Next syncing at: " << syncTime << " " << syncDate << std::endl;
-       }
+            std::cout << "Next syncing at: " << syncTime << " " << syncDate << std::endl;
+        }
 
-       time_t _t=time(0);
-       if(_t > t+5)
-       {
-           COMMAND cmd;
-           cmd.cmd=cmd_ping_request;
-           for(size_t i=0; i<sensors.size(); i++)
-           {
-               int tryct=0;
-               while(!sensors.at(i)->addCommand(cmd))
-               {
-                   if(tryct++==10)
-                   {
-                       std::cout << "main thread error: can't take mutex!" << std::endl;
-                   }
-               }
-           }
-           t=_t;
-       }
 
-       sleep(2);
+
+        for(size_t i=0; i<sensors.size(); i++)
+        {
+            if(!sensors.at(i)->sensor_initialised.load())
+            {
+                COMMAND cmd;
+                cmd.cmd=cmd_setRTC_request;
+                sensors.at(i)->addCommand(cmd);
+                awl::ByteArray response;
+                if(sensors.at(i)->getResponse(response))
+                {
+                    sensors.at(i)->sensor_initialised.store(true);
+                    std::cout << "Sensor " << i << "  RTC Set OK" << std::endl;
+                }
+                else
+                {
+                    std::cout << "Sensor " << i << "  RTC Set Error! No Response from sensor." << std::endl;
+                }
+            }
+        }
+
+
+
+        time_t _t=time(0);
+        if(_t > t+5)
+        {
+            COMMAND cmd;
+            cmd.cmd=cmd_ping_request;
+            for(size_t i=0; i<sensors.size(); i++)
+            {
+
+                sensors.at(i)->addCommand(cmd);
+                awl::ByteArray response;
+                if(!sensors.at(i)->getResponse(response))
+                {
+                    std::cout << "Sensor " << i << "  No response on ping" << std::endl;
+                    sensors.at(i)->stop();
+                }
+                else
+                {
+                    std::cout << "Sensor " << i << "  response on ping OK" << std::endl;
+                }
+
+            }
+            t=_t;
+        }
+
+        tcpserver.clearConnetcions();
+
+        sleep(2);
     }
 
     return 0;
