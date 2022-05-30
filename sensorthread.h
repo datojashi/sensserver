@@ -97,6 +97,7 @@ public:
 
 
     std::atomic_bool sensor_initialised=false;
+    std::atomic_uint no_pong=0;
 
 protected:
     void getmessage();

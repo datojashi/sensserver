@@ -190,7 +190,13 @@ int main()
                 if(!sensors.at(i)->getResponse(response))
                 {
                     std::cout << "Sensor " << i << "  No response on ping" << std::endl;
-                    sensors.at(i)->stop();
+                    if(sensors.at(i)->no_pong.load()==2)
+                    {
+                        sensors.at(i)->no_pong.store(0);
+                        sensors.at(i)->stop();
+                    }
+                    else
+                      sensors.at(i)->no_pong.fetch_add(1);
                 }
                 else
                 {
