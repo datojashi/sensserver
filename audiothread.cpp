@@ -3,7 +3,7 @@
 AudioThread::AudioThread(int i, std::string fpath) : tag(i)
 {
     fn=fpath+"/"+std::to_string(i);
-    f.open(fn,std::ios_base::out);
+    f.open(fn,std::ios_base::out | std::ios_base::app);
     std::cout << "Open file: " << fn << std::endl;
     data_in=&data1;
     data_out=&data2;

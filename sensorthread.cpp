@@ -18,10 +18,21 @@ SensorThread::~SensorThread()
 }
 
 
-bool SensorThread::addCommand(COMMAND cmd)
+bool SensorThread::addCommand(COMMAND cmd, bool mode)
 {
     mutex.lock();
-    commands.push(cmd);
+    if(mode)
+    {
+        commands.push(cmd);
+        std::cout << "Add cmd " << cmd.cmd << std::endl;
+    }
+    else if(commands.empty())
+    {
+        commands.push(cmd);
+        std::cout << "Add cmd PING " << cmd.cmd << std::endl;
+    }
+
+
     mutex.unlock();
     return true;
 }
@@ -64,7 +75,7 @@ void SensorThread::processCommand()
     {
         sendMsg(cmd.cmd);
         msgState.store(ms_sent);
-        std::cout << "msgState=" << msgState.load() << std::endl;
+        //std::cout << "msgState=" << msgState.load() << std::endl;
     }
 }
 
@@ -84,12 +95,13 @@ void SensorThread::sendMsg(CMD cmd)
     }
     case cmd_startAudio_request:
     {
-        std::cout << "Start adio request sent" << std::endl;
+        std::cout << " ===== Start adio request sent" << std::endl;
         waitmsg=cmd_startAudio_response;
         break;
     }
     case cmd_stopAudio_request:
     {
+        std::cout << " ===== Stop adio request sent" << std::endl;
         waitmsg=cmd_stopAudio_response;
         break;
     }
@@ -123,7 +135,7 @@ void SensorThread::sendMsg(CMD cmd)
 
     awl::ByteArray ba;
     awl::Core::initba(ba,reqdata,256);
-    awl::Core::printhex(ba);
+    //awl::Core::printhex(ba);
     socket->send(ba);
 }
 
@@ -186,10 +198,14 @@ void SensorThread::onmessage()
     }
     case cmd_startAudio_response:
     {        
+        msgState.store(ms_responded);
+        std::cout << "Message cmd_startAudio_response received" << std::endl;
         break;
     }
     case cmd_stopAudio_response:
     {
+        msgState.store(ms_responded);
+        std::cout << "Message cmd_stopAudio_response received" << std::endl;
         break;
     }
     case cmd_startLive_request:

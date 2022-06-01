@@ -36,20 +36,9 @@ void SensTelnet::parseCommand(std::string cmd)
         }
         else if(cmdv.at(0)=="get")
         {
-            //awl::Core::awl_split(cmdv.at())
 
-            if(cmdv.size() == 2)
-            {
-                uint s_nmb=std::stoi(cmdv.at(1));
 
-                if(sensors.size() > s_nmb)
-                {
-                    COMMAND cmd;
-                    cmd.cmd=cmd_startAudio_request;
-                    sensors.at(s_nmb)->addCommand(cmd);
-                }
 
-            }
         }
         else if(cmdv.at(0)=="setrtc")
         {
@@ -63,6 +52,36 @@ void SensTelnet::parseCommand(std::string cmd)
                 {
                     COMMAND cmd;
                     cmd.cmd=cmd_setRTC_request;
+                    sensors.at(s_nmb)->addCommand(cmd);
+                }
+
+            }
+        }
+        else if(cmdv.at(0)=="start")
+        {
+            if(cmdv.size() == 2)
+            {
+                uint s_nmb=std::stoi(cmdv.at(1));
+
+                if(sensors.size() > s_nmb)
+                {
+                    COMMAND cmd;
+                    cmd.cmd=cmd_startAudio_request;
+                    sensors.at(s_nmb)->addCommand(cmd);
+                }
+
+            }
+        }
+        else if(cmdv.at(0)=="stop")
+        {
+            if(cmdv.size() == 2)
+            {
+                uint s_nmb=std::stoi(cmdv.at(1));
+
+                if(sensors.size() > s_nmb)
+                {
+                    COMMAND cmd;
+                    cmd.cmd=cmd_stopAudio_request;
                     sensors.at(s_nmb)->addCommand(cmd);
                 }
 

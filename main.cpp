@@ -140,7 +140,7 @@ int main()
             telnets[i]->sensors=sensors;
         }
 
-        std::cout << "Sensors connected: " << sensors.size() << std::endl;
+        //std::cout << "Sensors connected: " << sensors.size() << std::endl;
 
         if( time(0) > synctime_t )
         {
@@ -185,7 +185,7 @@ int main()
             for(size_t i=0; i<sensors.size(); i++)
             {
 
-                sensors.at(i)->addCommand(cmd);
+                sensors.at(i)->addCommand(cmd,false);
                 awl::ByteArray response;
                 if(!sensors.at(i)->getResponse(response))
                 {
