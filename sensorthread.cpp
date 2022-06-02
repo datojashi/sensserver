@@ -303,12 +303,12 @@ void SensorThread::getmessage()
 }
 
 
-bool SensorThread::getResponse(awl::ByteArray& resp)
+bool SensorThread::getResponse(awl::ByteArray& resp, uint8_t to)
 {
     int ct=0;
     bool result=false;
     //std::cout << "getResponse    " << msgState.load() << std::endl;
-    while(ct < 5)
+    while(ct < to)
     {
         if(msgState.load()==ms_responded)
         {

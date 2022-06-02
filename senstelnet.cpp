@@ -68,6 +68,18 @@ void SensTelnet::parseCommand(std::string cmd)
                     COMMAND cmd;
                     cmd.cmd=cmd_startAudio_request;
                     sensors.at(s_nmb)->addCommand(cmd);
+                    awl::ByteArray resp;
+                    std::string s;
+                    if(sensors.at(s_nmb)->getResponse(resp,100))
+                    {
+                        s="\r\nOK\r\n";
+                    }
+                    else
+                    {
+                         s="\r\nError, no response\r\n";
+                    }
+                    socket->send(s);
+                    sendPrompt();
                 }
 
             }
@@ -83,6 +95,18 @@ void SensTelnet::parseCommand(std::string cmd)
                     COMMAND cmd;
                     cmd.cmd=cmd_stopAudio_request;
                     sensors.at(s_nmb)->addCommand(cmd);
+                    awl::ByteArray resp;
+                    std::string s;
+                    if(sensors.at(s_nmb)->getResponse(resp,100))
+                    {
+                         s="\r\nOK\r\n";
+                    }
+                    else
+                    {
+                         s="\r\nError, no response\r\n";
+                    }
+                    socket->send(s);
+                    sendPrompt();
                 }
 
             }

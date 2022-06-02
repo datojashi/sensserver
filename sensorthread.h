@@ -92,7 +92,7 @@ public:
     ~SensorThread();
 
     bool addCommand(COMMAND cmd, bool mode=true);
-    bool getResponse(awl::ByteArray& resp);
+    bool getResponse(awl::ByteArray& resp, uint8_t to=30);
     unsigned int getMsgState();
 
 
