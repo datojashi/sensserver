@@ -30,9 +30,8 @@ void SensTelnet::parseCommand(std::string cmd)
                 std::string s = "\r\n --- Sensor: " + std::to_string(j)+"\r\n";
                 std::cout << "\t--- Sensor: " << j << std::endl;
                 socket->send(s);
-                sendPrompt();
-
             }
+            sendPrompt();
         }
         else if(cmdv.at(0)=="get")
         {
