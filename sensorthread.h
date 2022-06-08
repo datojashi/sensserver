@@ -8,6 +8,10 @@
 
 #define MAX_AUDIO_CHANNELS 2
 
+#define SETTINGS_SECTOR	128*512
+#define CLOCK_SECTOR	200000
+#define DATA_SECTOR	1000000
+
 uint8_t const cypher[16] = {0x5b,0x7f,0xa1,0x59,0xbf,0xf5,0x46,0xaf,0xda,0x4c,0xc3,0x25,0xa2,0xe5,0xee,0x73};
 
 enum  CMD
@@ -32,6 +36,8 @@ enum  CMD
 
     cmd_setRTC_request	= 0x0dU,	//server --> sensor
     cmd_setRTC_response	= 0x0eU,	//sensor --> server
+
+    cmd_audioData_response = 0x0fU,
 
     cmd_None    =0x00ffU
 };
@@ -97,6 +103,7 @@ public:
 
 
     std::atomic_bool sensor_initialised=false;
+    std::atomic_bool sensor_sending=false;
     std::atomic_uint no_pong=0;
 
 protected:

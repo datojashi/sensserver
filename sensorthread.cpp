@@ -93,6 +93,12 @@ void SensorThread::sendMsg(CMD cmd)
         waitmsg=cmd_ping_response;
         break;
     }
+    case cmd_audioData_response:
+    {
+        reqdata[1]=cmd_ping_request;
+        reqdata[3]=0xff;
+        break;
+    }
     case cmd_startAudio_request:
     {
         std::cout << " ===== Start adio request sent" << std::endl;
@@ -125,6 +131,10 @@ void SensorThread::sendMsg(CMD cmd)
         reqdata[6]=dt->tm_mday;
         reqdata[7]=dt->tm_mon+1;
         reqdata[8]=dt->tm_year-100;
+        //9,10,11 - reserve
+         *((uint32_t*)(reqdata+12))=SETTINGS_SECTOR;
+        *((uint32_t*)(reqdata+16))=CLOCK_SECTOR;
+        *((uint32_t*)(reqdata+20))=DATA_SECTOR;
         std::cout << "Set RTC request sent   " << msgState.load() << std::endl;
         waitmsg=cmd_setRTC_response;
         break;
@@ -238,6 +248,13 @@ void SensorThread::onmessage()
             for(uint i=0; i<nmb;i++)
             {
                 audiochannels[i]->saveData();
+            }
+            sensor_sending.store(true);
+            if(msg_ct==300)
+            {
+                //std::cout << "=======cmd_audioData_response========" << std::endl;
+                sendMsg(cmd_audioData_response);
+                msg_ct=0;
             }
         }
         break;

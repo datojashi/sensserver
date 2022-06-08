@@ -66,7 +66,7 @@ int main()
     awl::Net::SockAddr telnetsockaddress( config.getValue("telnetaddr"),std::stoi(config.getValue("telnetport")));
 
 
-    std::cout << "sensor address=" << senssockaddress.addr()  << ':' << senssockaddress.addr() << std::endl;
+    std::cout << "sensor address=" << senssockaddress.addr()  << ':' << senssockaddress.port() << std::endl;
     std::cout << "telnet address=" << telnetsockaddress.addr() << ':' << telnetsockaddress.port() <<  std::endl;
 
 
@@ -132,8 +132,8 @@ int main()
 
     while(1)
     {
-       sensors = tcpserver.getConnections();
-       telnets = telnet.getConnections();
+        sensors = tcpserver.getConnections();
+        telnets = telnet.getConnections();
 
         for(size_t i=0; i<telnets.size(); i++)
         {
@@ -185,23 +185,28 @@ int main()
             for(size_t i=0; i<sensors.size(); i++)
             {
 
-                sensors.at(i)->addCommand(cmd,false);
-                awl::ByteArray response;
-                if(!sensors.at(i)->getResponse(response))
+                if(!sensors.at(i)->sensor_sending.load())
                 {
-                    std::cout << "Sensor " << i << "  No response on ping" << std::endl;
-                    if(sensors.at(i)->no_pong.load()==2)
+                    sensors.at(i)->addCommand(cmd,false);
+                    awl::ByteArray response;
+                    if(!sensors.at(i)->getResponse(response))
                     {
-                        sensors.at(i)->no_pong.store(0);
-                        sensors.at(i)->stop();
+                        std::cout << "Sensor " << i << "  No response on ping" << std::endl;
+                        if(sensors.at(i)->no_pong.load()==2)
+                        {
+                            sensors.at(i)->no_pong.store(0);
+                            sensors.at(i)->stop();
+                        }
+                        else
+                            sensors.at(i)->no_pong.fetch_add(1);
                     }
                     else
-                      sensors.at(i)->no_pong.fetch_add(1);
+                    {
+                        std::cout << "Sensor " << i << "  response on ping OK" << std::endl;
+                    }
                 }
                 else
-                {
-                    std::cout << "Sensor " << i << "  response on ping OK" << std::endl;
-                }
+                   sensors.at(i)->sensor_sending.store(false);
 
             }
             t=_t;
