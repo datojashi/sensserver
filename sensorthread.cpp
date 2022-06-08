@@ -135,6 +135,7 @@ void SensorThread::sendMsg(CMD cmd)
          *((uint32_t*)(reqdata+12))=SETTINGS_SECTOR;
         *((uint32_t*)(reqdata+16))=CLOCK_SECTOR;
         *((uint32_t*)(reqdata+20))=DATA_SECTOR;
+        *((uint32_t*)(reqdata+24))=BAUD_RATE;
         std::cout << "Set RTC request sent   " << msgState.load() << std::endl;
         waitmsg=cmd_setRTC_response;
         break;
