@@ -79,6 +79,20 @@ void SensorThread::processCommand()
     }
 }
 
+void SensorThread::setCurrentTime()
+{
+    time_t t=time(0);
+    struct tm *dt=localtime(&t);
+    reqdata[3]=dt->tm_sec;
+    reqdata[4]=dt->tm_min;
+    reqdata[5]=dt->tm_hour;
+    reqdata[6]=dt->tm_mday;
+    reqdata[7]=dt->tm_mon+1;
+    reqdata[8]=dt->tm_year-100;
+    //9,10,11 - reserve
+
+}
+
 void SensorThread::sendMsg(CMD cmd)
 {
     memset(reqdata,0,64);
@@ -90,13 +104,13 @@ void SensorThread::sendMsg(CMD cmd)
     case cmd_ping_request:
     {
         std::cout << "Ping sent" << std::endl;
+        setCurrentTime();
         waitmsg=cmd_ping_response;
         break;
     }
-    case cmd_audioData_response:
+    case cmd_AudioData_response:
     {
-        reqdata[1]=cmd_ping_request;
-        reqdata[3]=0xff;
+        setCurrentTime();
         break;
     }
     case cmd_startAudio_request:
@@ -121,23 +135,15 @@ void SensorThread::sendMsg(CMD cmd)
         waitmsg=cmd_stopLive_response;
         break;
     }
-    case cmd_setRTC_request:
+    case cmd_setConfig_request:
     {
-        time_t t=time(0);
-        struct tm *dt=localtime(&t);
-        reqdata[3]=dt->tm_sec;
-        reqdata[4]=dt->tm_min;
-        reqdata[5]=dt->tm_hour;
-        reqdata[6]=dt->tm_mday;
-        reqdata[7]=dt->tm_mon+1;
-        reqdata[8]=dt->tm_year-100;
-        //9,10,11 - reserve
-         *((uint32_t*)(reqdata+12))=SETTINGS_SECTOR;
+        setCurrentTime();
+        *((uint32_t*)(reqdata+12))=SETTINGS_SECTOR;
         *((uint32_t*)(reqdata+16))=CLOCK_SECTOR;
         *((uint32_t*)(reqdata+20))=DATA_SECTOR;
         *((uint32_t*)(reqdata+24))=BAUD_RATE;
         std::cout << "Set RTC request sent   " << msgState.load() << std::endl;
-        waitmsg=cmd_setRTC_response;
+        waitmsg=cmd_setConfig_response;
         break;
     }
     default:
@@ -192,12 +198,12 @@ void SensorThread::onmessage()
         }
         break;
     }
-    case cmd_setRTC_response:
+    case cmd_setConfig_response:
     {
-        if(msgState.load()==ms_sent && waitmsg==cmd_setRTC_response)
+        if(msgState.load()==ms_sent && waitmsg==cmd_setConfig_response)
         {
-           msgState.store(ms_responded);
-           std::cout << "Message setRTC_response received" << std::endl;
+            msgState.store(ms_responded);
+            std::cout << "Message setRTC_response received" << std::endl;
         }
         else
         {
@@ -208,7 +214,7 @@ void SensorThread::onmessage()
         break;
     }
     case cmd_startAudio_response:
-    {        
+    {
         msgState.store(ms_responded);
         std::cout << "Message cmd_startAudio_response received" << std::endl;
         break;
@@ -251,10 +257,10 @@ void SensorThread::onmessage()
                 audiochannels[i]->saveData();
             }
             sensor_sending.store(true);
-            if(msg_ct==150)
+            if(msg_ct==300)
             {
                 //std::cout << "=======cmd_audioData_response========" << std::endl;
-                sendMsg(cmd_audioData_response);
+                sendMsg(cmd_AudioData_response);
                 msg_ct=0;
             }
         }

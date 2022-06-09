@@ -50,7 +50,7 @@ void SensTelnet::parseCommand(std::string cmd)
                 if(sensors.size() > s_nmb)
                 {
                     COMMAND cmd;
-                    cmd.cmd=cmd_setRTC_request;
+                    cmd.cmd=cmd_setConfig_request;
                     sensors.at(s_nmb)->addCommand(cmd);
                 }
 

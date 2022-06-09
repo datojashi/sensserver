@@ -36,10 +36,10 @@ enum  CMD
     cmd_stopLive_request   =   0x0bU, // server --> sensor
     cmd_stopLive_response   =   0x0cU, // sensor --> server
 
-    cmd_setRTC_request	= 0x0dU,	//server --> sensor
-    cmd_setRTC_response	= 0x0eU,	//sensor --> server
+    cmd_setConfig_request	= 0x0dU,	//server --> sensor
+    cmd_setConfig_response	= 0x0eU,	//sensor --> server
 
-    cmd_audioData_response = 0x0fU,
+
 
     cmd_None    =0x00ffU
 };
@@ -141,6 +141,7 @@ private:
     void processCommand();
 
 
+    void setCurrentTime();
     void sendMsg(CMD cmd);
 
 

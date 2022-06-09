@@ -160,7 +160,7 @@ int main()
             if(!sensors.at(i)->sensor_initialised.load())
             {
                 COMMAND cmd;
-                cmd.cmd=cmd_setRTC_request;
+                cmd.cmd=cmd_setConfig_request;
                 sensors.at(i)->addCommand(cmd);
                 awl::ByteArray response;
                 if(sensors.at(i)->getResponse(response))
