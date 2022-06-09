@@ -135,7 +135,7 @@ private:
     int msg_ct = 0;
     uint8_t send_ct {0};
 
-    char reqdata[256];
+    char reqdata[64];
 
     void processAudioData();
     void processCommand();

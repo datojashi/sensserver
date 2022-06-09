@@ -81,7 +81,7 @@ void SensorThread::processCommand()
 
 void SensorThread::sendMsg(CMD cmd)
 {
-    memset(reqdata,0,256);
+    memset(reqdata,0,64);
     reqdata[1]=cmd;
     reqdata[2]=send_ct++;
 
@@ -145,7 +145,7 @@ void SensorThread::sendMsg(CMD cmd)
     }
 
     awl::ByteArray ba;
-    awl::Core::initba(ba,reqdata,256);
+    awl::Core::initba(ba,reqdata,64);
     //awl::Core::printhex(ba);
     socket->send(ba);
 }
@@ -251,7 +251,7 @@ void SensorThread::onmessage()
                 audiochannels[i]->saveData();
             }
             sensor_sending.store(true);
-            if(msg_ct==300)
+            if(msg_ct==150)
             {
                 //std::cout << "=======cmd_audioData_response========" << std::endl;
                 sendMsg(cmd_audioData_response);
