@@ -106,6 +106,24 @@ int main()
     time_t synctime_t=0;
     struct tm* ts = localtime(&t);
 
+    //*
+
+    //tm _tm;
+    //memset(&_tm,0,sizeof (tm));
+    //std::string dt = "09.06.22_17:22:05";
+    //char* r=strptime(dt.data(),"%d.%m.%y_%H:%M:%S",&_tm);
+    //if(r==nullptr)
+    //{
+    //    std::cout << "??????????????" << std::endl;
+    //}
+    bool ok;
+    time_t ttt=awl::Core::stringToTimeStamp("09.06.22_17:22:05","%d.%m.%y_%H:%M:%S", ok);
+    if(ok)
+        std::cout << "#####  " << t << '\t' <<  ttt << std::endl;
+    else
+        std::cout << "??????  " << t << '\t' <<  ttt << std::endl;
+    //*/
+
     std::cout << "**** " << ts->tm_hour << std::endl;
 
     if(ts->tm_hour < 4)
@@ -206,7 +224,7 @@ int main()
                     }
                 }
                 else
-                   sensors.at(i)->sensor_sending.store(false);
+                    sensors.at(i)->sensor_sending.store(false);
 
             }
             t=_t;

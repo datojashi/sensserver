@@ -58,14 +58,53 @@ void SensTelnet::parseCommand(std::string cmd)
         }
         else if(cmdv.at(0)=="start")
         {
-            if(cmdv.size() == 2)
+            if(cmdv.size() >= 2 && cmdv.size()<=5)
             {
                 uint s_nmb=std::stoi(cmdv.at(1));
-
                 if(sensors.size() > s_nmb)
                 {
                     COMMAND cmd;
                     cmd.cmd=cmd_startAudio_request;
+                    cmd.t0=0;
+                    cmd.t1=0;
+
+                    //*
+                    if(cmdv.size()==4)
+                    {
+                        bool ok;
+
+                        time_t t0 = awl::Core::stringToTimeStamp(cmdv.at(2),"%d.%m.%y_%H:%M:%S",ok);
+                        if(!ok)
+                        {
+                            std::cout << "Invalid argument " << cmdv.at(2) << std::endl;
+                        }
+                        time_t t1 = awl::Core::stringToTimeStamp(cmdv.at(3),"%d.%m.%y_%H:%M:%S",ok);
+                        if(!ok)
+                        {
+                            std::cout << "Invalid argument " << cmdv.at(3) << std::endl;
+                        }
+                        std::cout << "******************** " <<  cmd.t0 << '\t' << cmd.t1 << std::endl;
+                        if(cmd.t0 < cmd.t1)
+                        {
+                            cmd.t0=t0;
+                            cmd.t1=t1;
+                        }
+                        else
+                        {
+                             std::cout << "Invalid arguments " << cmdv.at(2)  << '\t' << cmdv.at(3) << std::endl;
+                        }
+                    }
+                    else if(cmdv.size()==3)
+                    {
+                        bool ok;
+                        time_t t1 = awl::Core::stringToTimeStamp(cmdv.at(2),"%d.%m.%y_%H:%M:%S",ok);
+                        if(!ok)
+                        {
+                            std::cout << "Invalid argument " << cmdv.at(2) << std::endl;
+                        }
+                        cmd.t1=t1;
+                    }
+                    //*/
                     sensors.at(s_nmb)->addCommand(cmd);
                     awl::ByteArray resp;
                     std::string s;
@@ -75,13 +114,13 @@ void SensTelnet::parseCommand(std::string cmd)
                     }
                     else
                     {
-                         s="\r\nError, no response\r\n";
+                        s="\r\nError, no response\r\n";
                     }
                     socket->send(s);
-                    sendPrompt();
-                }
 
+                }
             }
+            sendPrompt();
         }
         else if(cmdv.at(0)=="stop")
         {
@@ -98,11 +137,11 @@ void SensTelnet::parseCommand(std::string cmd)
                     std::string s;
                     if(sensors.at(s_nmb)->getResponse(resp,100))
                     {
-                         s="\r\nOK\r\n";
+                        s="\r\nOK\r\n";
                     }
                     else
                     {
-                         s="\r\nError, no response\r\n";
+                        s="\r\nError, no response\r\n";
                     }
                     socket->send(s);
                     sendPrompt();

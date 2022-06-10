@@ -54,8 +54,8 @@ enum MSG_STATE
 struct __attribute__((__packed__)) COMMAND
 {
     CMD cmd;
-    time_t start;
-    time_t stop;
+    time_t t0;
+    time_t t1;
 };
 
 struct __attribute__((__packed__)) MESSAGE
@@ -137,12 +137,15 @@ private:
 
     char reqdata[64];
 
+    time_t sensTime;
+
     void processAudioData();
     void processCommand();
 
 
-    void setCurrentTime();
-    void sendMsg(CMD cmd);
+    uint32_t getSectorByTime(time_t t);
+    time_t setCurrentTime();
+    void sendMsg(COMMAND cmd);
 
 
     std::atomic_uint msgState=ms_none;

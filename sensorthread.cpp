@@ -73,13 +73,13 @@ void SensorThread::processCommand()
     }
     if(cmd.cmd!=cmd_None)
     {
-        sendMsg(cmd.cmd);
+        sendMsg(cmd);
         msgState.store(ms_sent);
         //std::cout << "msgState=" << msgState.load() << std::endl;
     }
 }
 
-void SensorThread::setCurrentTime()
+time_t SensorThread::setCurrentTime()
 {
     time_t t=time(0);
     struct tm *dt=localtime(&t);
@@ -90,16 +90,26 @@ void SensorThread::setCurrentTime()
     reqdata[7]=dt->tm_mon+1;
     reqdata[8]=dt->tm_year-100;
     //9,10,11 - reserve
+    return t;
 
 }
 
-void SensorThread::sendMsg(CMD cmd)
+uint32_t SensorThread::getSectorByTime(time_t t)
+{
+    std::cout << "&&&&&&&&&" << t << '\t' << sensTime << std::endl;
+    uint32_t result;
+    uint32_t secs = t - sensTime;
+    result=DATA_SECTOR+43*secs;
+    return result;
+}
+
+void SensorThread::sendMsg(COMMAND cmd)
 {
     memset(reqdata,0,64);
-    reqdata[1]=cmd;
+    reqdata[1]=cmd.cmd;
     reqdata[2]=send_ct++;
 
-    switch (cmd)
+    switch (cmd.cmd)
     {
     case cmd_ping_request:
     {
@@ -115,6 +125,22 @@ void SensorThread::sendMsg(CMD cmd)
     }
     case cmd_startAudio_request:
     {
+        if(cmd.t0==0 || cmd.t0<=sensTime)
+        {
+            cmd.t0=sensTime;
+        }
+        time_t t=time(0);
+        if(cmd.t1==0 || cmd.t1 > t )
+        {
+            cmd.t1=t;
+        }
+        if(cmd.t0 >= cmd.t1)
+        {
+            cmd.t0=sensTime;
+            cmd.t1=t;
+        }
+        *((uint32_t*)(reqdata+4))=getSectorByTime(cmd.t0);
+        *((uint32_t*)(reqdata+8))=getSectorByTime(cmd.t1);
         std::cout << " ===== Start adio request sent" << std::endl;
         waitmsg=cmd_startAudio_response;
         break;
@@ -137,7 +163,7 @@ void SensorThread::sendMsg(CMD cmd)
     }
     case cmd_setConfig_request:
     {
-        setCurrentTime();
+        sensTime=setCurrentTime();
         *((uint32_t*)(reqdata+12))=SETTINGS_SECTOR;
         *((uint32_t*)(reqdata+16))=CLOCK_SECTOR;
         *((uint32_t*)(reqdata+20))=DATA_SECTOR;
@@ -260,7 +286,9 @@ void SensorThread::onmessage()
             if(msg_ct==300)
             {
                 //std::cout << "=======cmd_audioData_response========" << std::endl;
-                sendMsg(cmd_AudioData_response);
+                COMMAND cmd;
+                cmd.cmd=cmd_AudioData_response;
+                sendMsg(cmd);
                 msg_ct=0;
             }
         }
