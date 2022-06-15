@@ -75,6 +75,8 @@ void SensorThread::processCommand()
     {
         sendMsg(cmd);
         msgState.store(ms_sent);
+        if(cmd.cmd!=cmd_ping_request)
+            setLastCommand(cmd);
         //std::cout << "msgState=" << msgState.load() << std::endl;
     }
 }
@@ -123,42 +125,40 @@ void SensorThread::sendMsg(COMMAND cmd)
         setCurrentTime();
         break;
     }
-    case cmd_startAudio_request:
-    {
-        if(cmd.t0==0 || cmd.t0<=sensTime)
+    case cmd_startTransmit_request:
+    { 
+        if(cmd.live)
         {
-            cmd.t0=sensTime;
+            *((uint32_t*)(reqdata+4))=0;
+            *((uint32_t*)(reqdata+8))=0;
         }
-        time_t t=time(0);
-        if(cmd.t1==0 || cmd.t1 > t )
+        else
         {
-            cmd.t1=t;
+            if(cmd.t0==0 || cmd.t0<=sensTime)
+            {
+                cmd.t0=sensTime;
+            }
+            time_t t=time(0);
+            if(cmd.t1==0 || cmd.t1 > t )
+            {
+                cmd.t1=t;
+            }
+            if(cmd.t0 >= cmd.t1)
+            {
+                cmd.t0=sensTime;
+                cmd.t1=t;
+            }
+            *((uint32_t*)(reqdata+4))=getSectorByTime(cmd.t0);
+            *((uint32_t*)(reqdata+8))=getSectorByTime(cmd.t1);
         }
-        if(cmd.t0 >= cmd.t1)
-        {
-            cmd.t0=sensTime;
-            cmd.t1=t;
-        }
-        *((uint32_t*)(reqdata+4))=getSectorByTime(cmd.t0);
-        *((uint32_t*)(reqdata+8))=getSectorByTime(cmd.t1);
         std::cout << " ===== Start adio request sent" << std::endl;
-        waitmsg=cmd_startAudio_response;
+        waitmsg=cmd_startTransmit_response;
         break;
     }
-    case cmd_stopAudio_request:
+    case cmd_stopTransmit_request:
     {
-        std::cout << " ===== Stop adio request sent" << std::endl;
-        waitmsg=cmd_stopAudio_response;
-        break;
-    }
-    case cmd_startLive_request:
-    {
-        waitmsg=cmd_startLive_response;
-        break;
-    }
-    case cmd_stopLive_request:
-    {
-        waitmsg=cmd_stopLive_response;
+        std::cout << " ===== Stop transmit request sent" << std::endl;
+        waitmsg=cmd_stopTransmit_response;
         break;
     }
     case cmd_setConfig_request:
@@ -201,20 +201,20 @@ void SensorThread::onmessage()
     //*
     switch(msg->cmd)
     {
-    case cmd_ping_request:
-    {
-        char resp[256];
-        memset(resp,0,256);
-        int n = std::sprintf(resp,"Response on Ping: %d", msg->nmb);
-        //if(n < 256)
-        {
-            std::cout << "PONG   " << msg->nmb << '\t' << messages.size() << '\t' << std::string(resp) << std::endl;
-            msg_ct=0;
-            usleep(10000);
-            //socket->send(resp,256);
-        }
-        break;
-    }
+//    case cmd_ping_request:
+//    {
+//        char resp[256];
+//        memset(resp,0,256);
+//        int n = std::sprintf(resp,"Response on Ping: %d", msg->nmb);
+//        //if(n < 256)
+//        {
+//            std::cout << "PONG   " << msg->nmb << '\t' << messages.size() << '\t' << std::string(resp) << std::endl;
+//            msg_ct=0;
+//            usleep(10000);
+//            //socket->send(resp,256);
+//        }
+//        break;
+//    }
     case cmd_ping_response:
     {
         if(msgState.load()==ms_sent && waitmsg==cmd_ping_response)
@@ -239,24 +239,16 @@ void SensorThread::onmessage()
 
         break;
     }
-    case cmd_startAudio_response:
+    case cmd_startTransmit_response:
     {
         msgState.store(ms_responded);
         std::cout << "Message cmd_startAudio_response received" << std::endl;
         break;
     }
-    case cmd_stopAudio_response:
+    case cmd_stopTransmit_response:
     {
         msgState.store(ms_responded);
-        std::cout << "Message cmd_stopAudio_response received" << std::endl;
-        break;
-    }
-    case cmd_startLive_request:
-    {
-        break;
-    }
-    case cmd_stopLive_response:
-    {
+        std::cout << "Message cmd_stopTransmit_response received" << std::endl;
         break;
     }
     case cmd_AudioData_request:
@@ -379,4 +371,19 @@ bool SensorThread::getResponse(awl::ByteArray& resp, uint8_t to)
 unsigned SensorThread::getMsgState()
 {
     return msgState.load();
+}
+
+COMMAND SensorThread::getLastCommand()
+{
+    COMMAND cmd;
+    mutex.lock();
+    cmd=last_cmd;
+    mutex.unlock();
+    return cmd;
+}
+void SensorThread::setLastCommand(COMMAND cmd)
+{
+    mutex.lock();
+    last_cmd=cmd;
+    mutex.unlock();
 }

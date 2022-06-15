@@ -24,17 +24,17 @@ enum  CMD
     cmd_AudioData_request   =   0x03U, // sensor --> server
     cmd_AudioData_response  =   0x04U, // server --> sensor
 
-    cmd_startAudio_request   =   0x05U, // server --> sensor
-    cmd_startAudio_response  =   0x06U, // sensor --> server
+    cmd_startTransmit_request   =   0x05U, // server --> sensor
+    cmd_startTransmit_response  =   0x06U, // sensor --> server
 
-    cmd_stopAudio_request   =   0x07U, //  server --> sensor
-    cmd_stopAudio_response  =   0x08U, //  sensor --> server
+    cmd_stopTransmit_request   =   0x07U, //  server --> sensor
+    cmd_stopTransmit_response  =   0x08U, //  sensor --> server
 
-    cmd_startLive_request   =   0x09U, // server --> sensor
-    cmd_startLive_response   =   0x0aU, // sensor --> server
+    //cmd_startLive_request   =   0x09U, // server --> sensor
+    //cmd_startLive_response   =   0x0aU, // sensor --> server
 
-    cmd_stopLive_request   =   0x0bU, // server --> sensor
-    cmd_stopLive_response   =   0x0cU, // sensor --> server
+    //cmd_stopLive_request   =   0x0bU, // server --> sensor
+    //cmd_stopLive_response   =   0x0cU, // sensor --> server
 
     cmd_setConfig_request	= 0x0dU,	//server --> sensor
     cmd_setConfig_response	= 0x0eU,	//sensor --> server
@@ -56,6 +56,7 @@ struct __attribute__((__packed__)) COMMAND
     CMD cmd;
     time_t t0;
     time_t t1;
+    bool live;
 };
 
 struct __attribute__((__packed__)) MESSAGE
@@ -103,10 +104,15 @@ public:
     bool getResponse(awl::ByteArray& resp, uint8_t to=30);
     unsigned int getMsgState();
 
+    COMMAND getLastCommand();
+    void setLastCommand(COMMAND cmd);
+
 
     std::atomic_bool sensor_initialised=false;
     std::atomic_bool sensor_sending=false;
     std::atomic_uint no_pong=0;
+    time_t sensTime;
+
 
 protected:
     void getmessage();
@@ -137,7 +143,7 @@ private:
 
     char reqdata[64];
 
-    time_t sensTime;
+
 
     void processAudioData();
     void processCommand();
@@ -151,6 +157,7 @@ private:
     std::atomic_uint msgState=ms_none;
     uint8_t waitmsg;
 
+    COMMAND last_cmd;
 
 };
 
