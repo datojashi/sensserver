@@ -101,8 +101,16 @@ uint32_t SensorThread::getSectorByTime(time_t t)
     std::cout << "&&&&&&&&&" << t << '\t' << sensTime << std::endl;
     uint32_t result;
     uint32_t secs = t - sensTime;
-    result=DATA_SECTOR+43*secs;
+    result=DATA_SECTOR+86*secs;
     return result;
+}
+
+time_t SensorThread::getTimeBySector(uint32_t sect)
+{
+    time_t t = 0;
+    if(sect >=  DATA_SECTOR)
+        t=sensTime+(sect-DATA_SECTOR)/86;
+    return t;
 }
 
 void SensorThread::sendMsg(COMMAND cmd)

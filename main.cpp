@@ -104,8 +104,10 @@ int main()
 
 
 
-    //std::string s = awl::Core::dateToStringt(-1);
-    //std::cout << "************** "  << s << std::endl;
+
+
+    std::string s = awl::Core::dateToStringt(1655369132,true);
+    std::cout << "************** "  << s << std::endl;
 
     /*
     awl::ByteArray ba;
@@ -225,8 +227,10 @@ int main()
                                 bool ok;
                                 sensors.at(i)->sensTime=awl::Core::stringToTimeStamp(s,"%S.%M.%H.%d.%m.%y",ok);
                                 std::cout << "Reconecting - " << s  << '\t' << sensors.at(i)->sensTime << std::endl;
-                                cmd.t0=0; //todo
-                                cmd.t1=0; //todo
+                                uint32_t start_sector=*((uint32_t*)(response.data()+12));
+                                uint32_t stop_sector=*((uint32_t*)(response.data()+16));
+                                cmd.t0=sensors.at(i)->getTimeBySector(start_sector);
+                                cmd.t1=sensors.at(i)->getTimeBySector(stop_sector);
                             }
                         }
                         sensors.at(i)->setLastCommand(cmd);

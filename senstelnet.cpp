@@ -60,7 +60,7 @@ void SensTelnet::parseCommand(std::string cmd)
                 }
                 std::string s = "\t"
                         + std::to_string(j)+"\t"
-                        +awl::Core::dateToStringt(sensors.at(j)->sensTime)+"_"
+                        +awl::Core::dateToStringt(sensors.at(j)->sensTime,true)+"_"
                         +awl::Core::timeToStringt(sensors.at(j)->sensTime)+"\t"
                         +mode
                         + "\r\n";

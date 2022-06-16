@@ -107,6 +107,9 @@ public:
     COMMAND getLastCommand();
     void setLastCommand(COMMAND cmd);
 
+     uint32_t getSectorByTime(time_t t);
+     time_t getTimeBySector(uint32_t sect);
+
 
     std::atomic_bool sensor_initialised=false;
     std::atomic_bool sensor_sending=false;
@@ -149,7 +152,7 @@ private:
     void processCommand();
 
 
-    uint32_t getSectorByTime(time_t t);
+
     time_t setCurrentTime();
     void sendMsg(COMMAND cmd);
 
