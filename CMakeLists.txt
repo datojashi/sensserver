@@ -25,6 +25,8 @@ target_sources(sensserver
         audiothread.h
         senstelnet.cpp
         senstelnet.h
+        appthread.cpp
+        appthread.h
         )
 target_include_directories(sensserver PRIVATE ${CMAKE_SOURCE_DIR}, ../AWL)
 target_link_libraries(sensserver pthread)

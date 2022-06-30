@@ -1,5 +1,22 @@
 #include "senstelnet.h"
 
+
+void TelnetSensorProcess::prepare()
+{
+
+}
+
+
+void TelnetSensorProcess::processItem(SensorThread* item)
+{
+
+}
+
+void TelnetSensorProcess::finish()
+{
+
+}
+
 SensTelnet::SensTelnet()
 {
 
@@ -20,15 +37,25 @@ void SensTelnet::parseCommand(std::string cmd)
     std::cout << cmdv.size() << std::endl;
     if(cmdv.size() > 0)
     {
+        std::vector<SensorThread*>* sensors=nullptr;;
+        do
+        {
+            awl::Core::awl_delay_ms(250);
+            sensors=sensorserver->lock();
+        }
+        while(sensors==nullptr);
+
+
+
         std::cout << cmdv.at(0) << std::endl;
 
         if(cmdv.at(0)=="list")
         {
-            std:: cout << "Connected sensors " << sensors.size() << std::endl;
-            for(size_t j=0; j<sensors.size(); j++)
+            std:: cout << "Connected sensors " << sensors->size() << std::endl;
+            for(size_t j=0; j<sensors->size(); j++)
             {
                 std::string mode="";
-                COMMAND cmd=sensors.at(j)->getLastCommand();
+                COMMAND cmd=sensors->at(j)->getLastCommand();
 
                 std::cout << "**********" << cmd.cmd << std::endl;
 
@@ -60,8 +87,8 @@ void SensTelnet::parseCommand(std::string cmd)
                 }
                 std::string s = "\t"
                         + std::to_string(j)+"\t"
-                        +awl::Core::dateToStringt(sensors.at(j)->sensTime,true)+"_"
-                        +awl::Core::timeToStringt(sensors.at(j)->sensTime)+"\t"
+                        +awl::Core::dateToStringt(sensors->at(j)->sensTime,true)+"_"
+                        +awl::Core::timeToStringt(sensors->at(j)->sensTime)+"\t"
                         +mode
                         + "\r\n";
                 std::cout << "\t--- Sensor: " << j << std::endl;
@@ -76,13 +103,12 @@ void SensTelnet::parseCommand(std::string cmd)
 
                 std::cout << "setrtc << " << s_nmb << std::endl;
 
-                if(sensors.size() > s_nmb)
+                if(sensors->size() > s_nmb)
                 {
                     COMMAND cmd;
                     cmd.cmd=cmd_setConfig_request;
-                    sensors.at(s_nmb)->addCommand(cmd);
+                    sensors->at(s_nmb)->addCommand(cmd);
                 }
-
             }
         }
         else if(cmdv.at(0)=="start")
@@ -90,7 +116,7 @@ void SensTelnet::parseCommand(std::string cmd)
             if(cmdv.size() >= 2 && cmdv.size()<=5)
             {
                 uint s_nmb=std::stoi(cmdv.at(1));
-                if(sensors.size() > s_nmb)
+                if(sensors->size() > s_nmb)
                 {
                     COMMAND cmd;
                     cmd.cmd=cmd_startTransmit_request;
@@ -136,10 +162,10 @@ void SensTelnet::parseCommand(std::string cmd)
                     {
                         cmd.live=true;
                     }
-                    sensors.at(s_nmb)->addCommand(cmd);
+                    sensors->at(s_nmb)->addCommand(cmd);
                     awl::ByteArray resp;
                     std::string s;
-                    if(sensors.at(s_nmb)->getResponse(resp,100))
+                    if(sensors->at(s_nmb)->getResponse(resp,100))
                     {
                         s="\r\nOK\r\n";
                     }
@@ -158,14 +184,14 @@ void SensTelnet::parseCommand(std::string cmd)
             {
                 uint s_nmb=std::stoi(cmdv.at(1));
 
-                if(sensors.size() > s_nmb)
+                if(sensors->size() > s_nmb)
                 {
                     COMMAND cmd;
                     cmd.cmd=cmd_stopTransmit_request;
-                    sensors.at(s_nmb)->addCommand(cmd);
+                    sensors->at(s_nmb)->addCommand(cmd);
                     awl::ByteArray resp;
                     std::string s;
-                    if(sensors.at(s_nmb)->getResponse(resp,100))
+                    if(sensors->at(s_nmb)->getResponse(resp,100))
                     {
                         s="\r\nOK\r\n";
                     }
@@ -182,6 +208,7 @@ void SensTelnet::parseCommand(std::string cmd)
 
         }
         sendPrompt();
+        sensorserver->unlock();
     }
 }
 

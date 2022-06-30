@@ -44,6 +44,13 @@ void SensorThread::onstart()
     ct3=0;
     chunk.clear();
     messages.clear();
+    std::cout << "started Sensor thread" << std::endl;
+}
+
+
+void SensorThread::onstop()
+{
+    std::cout << "stoped Sensor thread" << std::endl;
 }
 
 
@@ -134,7 +141,7 @@ void SensorThread::sendMsg(COMMAND cmd)
         break;
     }
     case cmd_startTransmit_request:
-    { 
+    {
         if(cmd.live)
         {
             *((uint32_t*)(reqdata+4))=0;
@@ -209,20 +216,20 @@ void SensorThread::onmessage()
     //*
     switch(msg->cmd)
     {
-//    case cmd_ping_request:
-//    {
-//        char resp[256];
-//        memset(resp,0,256);
-//        int n = std::sprintf(resp,"Response on Ping: %d", msg->nmb);
-//        //if(n < 256)
-//        {
-//            std::cout << "PONG   " << msg->nmb << '\t' << messages.size() << '\t' << std::string(resp) << std::endl;
-//            msg_ct=0;
-//            usleep(10000);
-//            //socket->send(resp,256);
-//        }
-//        break;
-//    }
+    //    case cmd_ping_request:
+    //    {
+    //        char resp[256];
+    //        memset(resp,0,256);
+    //        int n = std::sprintf(resp,"Response on Ping: %d", msg->nmb);
+    //        //if(n < 256)
+    //        {
+    //            std::cout << "PONG   " << msg->nmb << '\t' << messages.size() << '\t' << std::string(resp) << std::endl;
+    //            msg_ct=0;
+    //            usleep(10000);
+    //            //socket->send(resp,256);
+    //        }
+    //        break;
+    //    }
     case cmd_ping_response:
     {
         if(msgState.load()==ms_sent && waitmsg==cmd_ping_response)

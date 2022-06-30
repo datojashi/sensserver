@@ -86,6 +86,12 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/dato/Projects/sensserver/appthread.cpp">
+			<Option target="sensserver"/>
+		</Unit>
+		<Unit filename="/home/dato/Projects/sensserver/appthread.h">
+			<Option target="sensserver"/>
+		</Unit>
 		<Unit filename="/home/dato/Projects/sensserver/audiothread.cpp">
 			<Option target="sensserver"/>
 		</Unit>

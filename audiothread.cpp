@@ -59,7 +59,7 @@ void AudioThread::onstart()
 
 void AudioThread::onstop()
 {
-    std::cout << "Stoped thread " << tag << std::endl;
+    std::cout << "Stoped Audio thread " << tag << std::endl;
 }
 
 void AudioThread::run()

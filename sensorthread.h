@@ -120,6 +120,7 @@ public:
 protected:
     void getmessage();
     void onstart();
+    void onstop();
     void onwork();
     void onmessage();
     void ontimeout();
@@ -133,6 +134,8 @@ private:
     //    uint32_t cmd;
     //    uint32_t nmb;
     //    uint32_t msgsize;
+
+
 
 
     std::queue<COMMAND> commands;
@@ -161,6 +164,8 @@ private:
     uint8_t waitmsg;
 
     COMMAND last_cmd;
+
+    uint32_t sens_ID=0;
 
 };
 
